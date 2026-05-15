@@ -1,0 +1,32 @@
+name: Arduino Smart Bin Build
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+
+      - name: Install Board and Libraries
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli lib install "LiquidCrystal I2C"
+          arduino-cli lib install "Servo"
+
+      - name: Compile for Uno
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno --output-dir ./build ./smart_bin
+
+      - name: Upload Hex Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smart-bin-hex
+          path: ./build/*.hex
